@@ -69,7 +69,6 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
-          # 关键：强制使用 LLVM 工具链
           export LD=ld.lld
           export AR=llvm-ar
           export NM=llvm-nm
@@ -80,6 +79,9 @@ jobs:
 
           make O=out ARCH=arm64 ${{ github.event.inputs.defconfig || 'vendor/sdm660-perf_defconfig' }}
 
+          # 关键修正：关闭 MODVERSIONS，避免 __crc_ 符号的 ABS32 重定位
+          ./scripts/config --file out/.config -d MODVERSIONS
+          ./scripts/config --file out/.config -d MODULE_SIG
           ./scripts/config --file out/.config -e SECTION_MISMATCH_WARN_ONLY
           make O=out ARCH=arm64 olddefconfig
 
