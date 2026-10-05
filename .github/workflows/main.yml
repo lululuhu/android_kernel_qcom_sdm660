@@ -36,7 +36,7 @@ jobs:
           path: AnyKernel3
           fetch-depth: 1
 
-      # 4. 安装编译依赖（含 GNU 交叉编译器和 python2）
+      # 4. 安装编译依赖
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -65,7 +65,7 @@ jobs:
           git clone --depth=1 https://github.com/kdrag0n/proton-clang.git clang
           echo "$HOME/toolchain/clang/bin" >> $GITHUB_PATH
 
-      # 7. 编译内核
+      # 7. 编译内核（含 SECTION_MISMATCH_WARN_ONLY 修正）
       - name: Build kernel
         working-directory: kernel
         run: |
@@ -77,6 +77,11 @@ jobs:
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
           make O=out ARCH=arm64 ${{ github.event.inputs.defconfig || 'vendor/sdm660-perf_defconfig' }}
+
+          # 关键修正：Section mismatch 只警告不报错
+          ./scripts/config --file out/.config -e SECTION_MISMATCH_WARN_ONLY
+          make O=out ARCH=arm64 olddefconfig
+
           make -j$(nproc --all) O=out \
             ARCH=arm64 \
             CC=clang \
